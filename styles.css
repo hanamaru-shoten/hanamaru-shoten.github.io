@@ -1,0 +1,224 @@
+/* styles.css */
+body {
+    font-family: 'メイリオ';
+}
+
+/* ページ全体の背景色を設定 */
+body {
+    background-color: #171322;
+}
+
+/* その他のテキストの色を白に設定 */
+h1, p, span, a, input, button, body {
+    color: #E4E3E8;
+}
+
+h1 {
+    position: relative;
+    padding: 1rem .5rem;
+    margin-top: -17.5px; /* 間隔を設定 */
+}
+  
+h1:after {
+    position: absolute;
+    bottom: 17.5px;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    content: '';
+    border-radius: 3px;
+    background-image: -webkit-gradient(linear, right top, left top, from(#171322), to(#342F45));
+    background-image: -webkit-linear-gradient(right, #171322 0%, #342F45 100%);
+    background-image: linear-gradient(to left, #171322 0%, #342F45 100%);
+}
+
+#stream-info {
+    position: relative;
+    border: none; /* 枠線をなくす */
+    padding: 12.5px; /* 内側の余白を追加 */
+    background: #342F45;
+    height: 25px;
+    bottom: 32.5px;
+    padding-left: 60px; /* アイコンの幅分だけ左側に余白を設定 */
+}
+
+#streamer-icon {
+    position: relative;
+    border: 5px solid #221C2F;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    bottom: 80px;
+    left: 7.5px; /* 左からの位置 */
+}
+
+#connection-info {
+    position: relative;
+    border-top: 2px solid #423F4E;
+    /* border-right: 3px solid #423F4E; */
+    border-bottom: 2px solid #423F4E;
+    /* border-left: 3px solid #423F4E; */
+    padding: 2.5px; /* 内側の余白を追加 */
+    background: #342F45;
+    height: 21px;
+    bottom: 80px;
+}
+
+/* ボタンのスタイル */
+button {
+    position: relative;
+    padding: 5px 15px; /* テキストの内側の余白を追加 */
+    color: #171322; /* テキスト色を設定 */
+    border: none; /* 枠線をなくす */
+    border-radius: 15px; /* 角を丸める */
+    font-size: 16px; /* フォントサイズを設定 */
+    cursor: pointer; /* ホバー時のカーソルを変更 */
+    transition-duration: 0.15s; /* ホバーエフェクトのアニメーションを追加 */
+    width: 15%; /* 幅 */
+    background-color: #FFFFFF; /* 背景色を設定 */
+    bottom: 75px;
+}
+
+/* ボタンのホバーエフェクト */
+button:hover {
+    transform: scale(1.025);
+    background-color: #D3D2D5; /* ホバー時の背景色を設定 */
+}
+
+/* 入力欄のスタイル */
+#m_id_input {
+    position: relative;
+    padding: 5px 15px; /* テキストの内側の余白を追加 */
+    color: #FFFFFF; /* テキスト色を設定 */
+    border: none;
+    border-radius: 15px; /* 角を丸める */
+    font-size: 16px; /* フォントサイズを設定 */
+    width: 75%; /* 幅 */
+    background: #342F45;
+    bottom: 75px;
+}
+
+#viewers-monitor {
+    position: relative;
+    font-size: 19px; /* フォントサイズを設定 */
+    color: #F73357; /* テキスト色を設定 */
+    text-align: right;
+    right: 1%;
+    bottom: 140px;
+}
+
+#attribute-discription {
+    display: none; /* 最初は非表示 */
+    padding: 7.5px;
+    border-radius: 20px;
+    background: #342F45;
+    border: 2px solid #423F4E;
+    font-size: 14px;
+    text-align: left;
+    font-weight: normal;
+    z-index: 9999;
+    position: absolute;
+    left: 10%;
+    top: 10%;
+    opacity: 0.95;
+}
+
+#attribute-cell:hover {
+    color: #FFFFFF;
+}
+
+#chat-table {
+    border-collapse: separate; /* セルの境界を分離 */
+    border-spacing: 0 7.5px; /* 縦方向の間隔と水平方向の間隔を設定 */
+}
+
+table{
+    width: 100%;
+    height: 80%;
+    table-layout: fixed;
+  }
+
+#attribute-cell {
+    width: 4.5%;
+}
+
+th:nth-child(2) {
+    width: 2.5%;
+}
+
+th:nth-child(3) {
+    width: 10%;
+}
+
+th:nth-child(4) {
+    width: 8%;
+}
+
+th:nth-child(5) {
+    width: 30%;
+}
+
+th:nth-child(6) {
+    width: 6%;
+}
+
+#chat-table tbody td {
+    font-size: 15px; /* テーブル内のセルの文字サイズを設定 */
+    background-color: #211D2F;
+    padding: 5px;
+    word-break: break-word;
+}
+
+/* 左側のセルの角を丸める */
+#chat-table tbody tr td:first-child {
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+/* 右側のセルの角を丸める */
+#chat-table tbody tr td:last-child {
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+#table_container {
+    position: relative;
+    bottom: 95px;
+    max-height: 80vh; /* 表の最大高さを設定します。必要に応じて調整してください。*/
+    overflow-y: scroll; /* 縦方向にスクロール可能にします。*/
+    overflow-x: hidden; /* 横スクロールを無効にします。*/
+}
+
+/* 縦方向のスクロールバーのスタイル */
+#table_container::-webkit-scrollbar {
+    width: 8px; /* スクロールバーの幅 */
+}
+
+#table_container::-webkit-scrollbar-thumb {
+    border: 1px solid #423F4E;
+    background-color: #0B0911; /* スクロールバーのつまみの色 */
+    border-radius: 10px; /* スクロールバーのつまみの角の丸み */
+    height: 50%; /* スクロールバーのつまみの高さ */
+}
+
+#chat-table thead th {
+    position: sticky;
+    top: 0; /* ヘッダーを固定します。*/
+    z-index: 1; /* ヘッダーが他の要素の上に表示されるようにします。*/
+    background-color: #342F45; /* ヘッダーの背景色を設定します。*/
+    color: #E4E3E8; /* ヘッダーのテキスト色を設定します。*/
+}
+
+/* stampサイズ */
+.img-stamp {
+    width: 80px; /* 画像の幅を指定 */
+    height: auto; /* 高さは自動調整 */
+}
+
+/* ユーザー名の下線を非表示にする */
+.user-link {
+    text-decoration: none; 
+}
+
+
+/* その他の要素のスタイルをここに追加 */
