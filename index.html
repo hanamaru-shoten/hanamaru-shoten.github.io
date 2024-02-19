@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPENREC.tv 非公式コメントビューア</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>OPENREC.tv 非公式コメビュ</h1>
+
+    <div id="stream-info">
+        <!-- 配信タイトルと配信者のニックネームが表示される部分 -->
+        配信タイトル by 配信者
+    </div>  
+
+    <div id="image-wrapper">
+        <!-- アイコン画像を表示するためのimg要素 -->
+        <img id="streamer-icon" src="https://image-handler.openrec.tv/eyJidWNrZXQiOiJvcGVucmVjLWFwcGRhdGEiLCJrZXkiOiJ1c2VyLzI1LzI0OTgucG5nIiwiZWRpdHMiOnsicmVzaXplIjp7ImZpdCI6Imluc2lkZSIsIndpZHRoIjoiMzIwIn19LCJvdXRwdXRGb3JtYXQiOiJwbmcifQ==">
+    </div> 
+
+    <div id="connection-info">
+        <!-- チャットサーバへの接続メッセージが表示される部分 -->
+        >> 枠IDを入力してください。
+    </div>
+
+    <!-- M_IDを入力する入力欄と接続ボタン -->
+    <div>
+        <input type="text" id="m_id_input" placeholder="枠IDを入力(例:配信URLがhttps://www.openrec.tv/live/od97q6ecuptならod97q6ecuptを入力)">
+        <button onclick="connectToChat()">接続</button>        
+    </div>
+
+    <div id="viewers-monitor">
+        <!-- 同接が表示される部分 -->
+    </div>
+    
+    <div id="table_container">
+        <table id="chat-table">
+            <thead>
+                <tr>
+                    <th id="attribute-cell">属性🛈️</th>
+                    <th>🈂</th>
+                    <th>ユーザ名</th>
+                    <th>ID</th>
+                    <th>コメント</th>
+                    <th>投稿時間</th>
+                </tr>
+            </thead>
+            <tbody id="chat-body">
+                <!-- コメントが表示される部分 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 属性説明のポップアップ -->
+    <div id="attribute-discription">
+        ❓属性<br>
+        ここに表示される絵文字は以下を意味します。<br>
+        🔰→新規ユーザ。アカウント作成後24時間経過で消える。設定で非表示にできる。<br>
+        🤖→モデレーター。モデレーターの登録と解除は配信者のみ可能。<br>
+        🅿→プレミアム会員。大変ありがたいお客様。設定で非表示にできる。<br>
+        🔇→ミュートユーザ。配信者によってミュートにされたユーザ。他人から自分のコメントが見えなくなる。<br>
+    </div>
+
+    <script>
+        document.getElementById('viewers-monitor').innerHTML = `●同接:???`;
+        let activeSocket = null; // WebSocket接続を追跡するための変数
+
+        // 入力されたURLから枠IDを抽出する関数
+        function extractFrameIDFromURL(url) {
+            const match = url.match(/\/live\/([^\/]+)/);
+            if (match && match[1]) {
+                return match[1];
+            }
+            return null;
+        }
+
+        // チャットサーバへの接続メッセージを表示する関数
+        function displayConnectionMessage(message) {
+            const connectionInfo = document.getElementById('connection-info');
+            const timestamp = new Date().toLocaleTimeString();
+            connectionInfo.innerText = `${message} (${timestamp})`;
+        }
+
+        // 接続ボタンがクリックされた時の処理
+        function connectToChat() {
+            let frameID = document.getElementById('m_id_input').value.trim();
+            document.getElementById('viewers-monitor').innerHTML = `●同接:???`;
+
+            // 入力された値がURLの場合、枠IDを抽出してセットする
+            if (frameID.includes('https://www.openrec.tv/live/')) {
+                frameID = extractFrameIDFromURL(frameID);
+                if (!frameID) {
+                    alert('正しいURLを入力してください。');
+                    return;
+                }
+                document.getElementById('m_id_input').value = frameID;
+            }
+
+            const base_url = `https://public.openrec.tv/external/api/v5/movies/${frameID}`;
+            fetch(base_url)
+                .then(response => response.json())
+                .then(movie_data => {
+                    
+                    const iconImage = movie_data.channel.icon_image_url;
+                    document.getElementById('streamer-icon').src = iconImage;
+
+                    const title = movie_data.title;
+
+                    const streamer_nickname = movie_data.channel.nickname;
+                    const streamer_id = movie_data.channel.id;
+                    const stream_link = `<a href="https://www.openrec.tv/live/${frameID}" target="_blank">「${title}」</a>`;
+                    const streamer_link = `<a href="https://www.openrec.tv/user/${streamer_id}" target="_blank">${streamer_nickname}(@${streamer_id})</a>`;
+
+                    const movie_id = movie_data.movie_id;
+
+                    document.getElementById('stream-info').innerHTML = `${stream_link} by ${streamer_link}`;
+
+                    const web = `wss://chat.openrec.tv/socket.io/?movieId=${movie_id}&EIO=3&transport=websocket`;
+
+                    if (activeSocket) {
+                        activeSocket.close(); // 前のWebSocket接続を閉じる
+                    }
+
+                    const ws = new WebSocket(web);
+                    activeSocket = ws; // アクティブなWebSocket接続を保存
+
+                    ws.onopen = function() {
+                        displayConnectionMessage('>> チャットサーバに接続しました！');
+                        sendPingMessage(ws);
+                        // 新しい接続が確立された際に、チャットボックスの内容を空にする
+                        // chat-allの子要素のテキストを消去する
+                        document.querySelectorAll('#chat-body > tr').forEach(tr => {
+                            tr.remove(); // 行を削除
+                        });
+                    };
+
+                    ws.onmessage = function(event) {
+                        try {
+                            const message = event.data;
+                            const index = message.indexOf("[");
+                            if (index === 2) {
+                                const msg_j = message.slice(2);
+                                const json_obj = JSON.parse(JSON.parse(msg_j)[1].replace("\\", ""));
+                                const data = json_obj.data;
+                                const t = json_obj.type;
+
+                                if (t === 0) {
+                                    if (data.hasOwnProperty('stamp') && data.stamp !== null && data.stamp.image_url !== null) {
+                                        // stampが存在し、image_urlがnullでない場合の処理
+                                        stamp = data.stamp.image_url; // stampにdata.stamp.image_urlを代入
+                                    } else {
+                                        stamp = false; // stampにfalseを代入
+                                    }
+
+                                    const { is_fresh, is_moderator, is_premium, is_muted, months } = user_info(data);
+                                    let { user_name, user_key, message, message_dt, user_icon, user_color } = data;
+                                    message_dt = message_dt.slice(-8);
+                                    const attribute = `${is_fresh}${is_moderator}${is_premium}${is_muted}`;
+                                    // displayMessageRow 関数を呼び出す
+                                    displayMessageRow(message, attribute, months, user_key, message_dt, user_name, user_color, stamp);
+                                }
+
+
+                                if (t === 1) {
+                                    const {live_viewers} = data;
+                                    document.getElementById('viewers-monitor').innerHTML = `●同接:${live_viewers}`;
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`WebSocketエラーが発生しました: ${error}`);
+                        }
+                    };
+
+                    ws.onclose = function() {
+                        console.log('接続が閉じられました');
+                        // 再接続のためのロジックを実装
+                    };
+
+                    ws.onerror = function(error) {
+                        console.log('エラーが発生しました:', error);
+                    };
+                })
+                .catch(error => {
+                    console.log('API実行時にエラーが発生しました:', error);
+                    displayConnectionMessage('>> 接続できません！入力内容を確認してください！');
+                });
+        }
+
+        function displayMessageRow(message, attribute, months, user_key, message_dt, user_name, user_color, stamp) {
+            const chatBody = document.getElementById("chat-body");
+            const newRow = chatBody.insertRow();
+            // 順番に注意
+            newRow.insertCell().textContent = attribute;
+            newRow.insertCell().textContent = months;
+
+            // user_nameのセルを作成し、リンクを設定する
+            const userNameCell = newRow.insertCell();
+            const userLink = document.createElement('a');
+            userLink.href = `https://www.openrec.tv/user/${user_key}`;
+            userLink.target = "_blank"; // 新しいタブで開く
+            userLink.textContent = user_name;
+            userLink.style.color = user_color;
+            userLink.classList.add('user-link'); // 新しいクラスを追加
+            userNameCell.appendChild(userLink);
+
+            // 順番に注意
+            newRow.insertCell().textContent = user_key;
+            
+            // stampがFalseなら、messageに文字列があるのでそのまま挿入
+            if (stamp === false) {
+                newRow.insertCell().textContent = message;
+            } else {
+                // 新しいセルを作成し、画像を表示するためのimg要素を追加します
+                const stampCell = newRow.insertCell();
+                const stampImage = document.createElement('img');
+                stampImage.src = stamp;
+                stampImage.classList.add('img-stamp'); // CSSクラスを追加
+                stampCell.appendChild(stampImage);
+            }
+
+            newRow.insertCell().textContent = message_dt;
+        }
+
+        function sendPingMessage(ws) {
+            const pingInterval = 25000;
+            setInterval(function() {
+                if (!isOpen(ws)) return; // WebSocketが開いていない場合は何もせずに終了
+                ws.send("2");
+            }, pingInterval);
+        }
+
+        // WebSocketが開いているかどうかを確認する関数
+        function isOpen(ws) {
+            return ws.readyState === WebSocket.OPEN;
+        }
+
+        function user_info(data) {
+            let is_fresh = data.is_fresh ? '🔰' : '';
+            let is_moderator = data.is_moderator ? '🤖' : '';
+            let is_premium = data.is_premium ? '🅿' : '';
+            let is_muted = data.is_muted ? '🔇' : '';
+            let months = '';
+
+            if (data.badges && data.badges.length > 0) {
+                months = `${data.badges[0].subscription.months}`;
+            }
+
+            return { is_fresh, is_moderator, is_premium, is_muted, months };
+        }
+    // 属性上のマウスオーバーの監視
+    // 属性セルの要素を取得
+    const attributeCell = document.getElementById('attribute-cell');
+
+    // 属性説明のポップアップ要素を取得
+    const attributeDiscription = document.getElementById('attribute-discription');
+
+    // マウスオーバーでポップアップを表示
+    attributeCell.addEventListener('mouseover', function() {
+        attributeDiscription.style.display = 'block';
+    });
+
+    // マウスアウトでポップアップを非表示
+    attributeCell.addEventListener('mouseout', function() {
+        attributeDiscription.style.display = 'none';
+    });
+    </script>
+</body>
+</html>
